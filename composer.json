@@ -1,6 +1,7 @@
 {
   "name": "gloeckchen/magic-meta-box",
   "description": "Helper class to generate wordpress metaboxe",
+  "version": "0.1",
   "homepage": "https://github.com/Gloeckchen/MagicMetaBox",
   "license": "MIT",
   "keywords": [
