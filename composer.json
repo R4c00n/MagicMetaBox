@@ -1,0 +1,25 @@
+{
+  "name": "Gloeckchen/MagicMetaBox",
+  "description": "Helper class to generate wordpress metaboxe",
+  "homepage": "https://github.com/Gloeckchen/MagicMetaBox",
+  "license": "MIT",
+  "keywords": [
+    "wordpress",
+    "metabox"
+  ],
+  "authors": [
+    {
+      "name": "Marcel Kempf",
+      "email": "gloeckchenxvx@gmail.com"
+    }
+  ],
+  "require": {
+    "nategood/httpful": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "Lib\\": "lib/"
+    }
+  }
+}
+
