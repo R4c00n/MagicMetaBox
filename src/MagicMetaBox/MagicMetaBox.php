@@ -100,7 +100,7 @@ class MagicMetaBox {
                     <td>
                         <?php
                         $meta = get_post_meta( $post->ID, $this->prefix . $this->id, true );
-                        $methodName = 'show' . strtoupper( $field['type'] ) . 'Field';
+                        $methodName = 'show' . ucfirst( $field['type'] ) . 'Field';
                         if ( method_exists( $this, $methodName ) ) {
                             call_user_func( array( $this, $methodName ), $field, $meta );
                         }
