@@ -133,7 +133,9 @@ class MagicMetaBox {
             $metaName = $field['name'];
             $single = !isset( $field['multiple'] ) || !$field['multiple'] ? false : true;
             $oldMeta = get_post_meta( $postId, $this->metaName, true );
-
+            if ( empty( $oldMeta ) ) {
+                $oldMeta = $single ? '' : array();
+            }
             $postMeta = isset( $_POST[$this->metaName] ) ? $_POST[$this->metaName] : false;
             if ( !$postMeta ) {
                 return;
@@ -156,9 +158,10 @@ class MagicMetaBox {
      */
     protected function saveField( $postId, $field, $oldMeta, $newMetaValue ) {
         $metaName = $field['name'];
-        unset( $oldMeta[$metaName] );
-        update_post_meta( $postId, $this->metaName, $oldMeta );
-
+        if ( isset( $oldMeta[$metaName] ) ) {
+            unset( $oldMeta[$metaName] );
+            update_post_meta( $postId, $this->metaName, $oldMeta );
+        }
         if ( empty( $newMetaValue ) ) {
             return;
         }
