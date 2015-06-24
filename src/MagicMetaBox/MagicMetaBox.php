@@ -136,6 +136,7 @@ class MagicMetaBox {
             if ( empty( $oldMeta ) ) {
                 $oldMeta = $single ? '' : array();
             }
+
             $postMeta = isset( $_POST[$this->metaName] ) ? $_POST[$this->metaName] : false;
             if ( !$postMeta ) {
                 return;
@@ -231,6 +232,24 @@ class MagicMetaBox {
     }
 
     /**
+     * Add a checkbox field.
+     *
+     * @since 1.0.0
+     * @param string $name
+     * @param array $attributes
+     * @param string $label
+     * @return void
+     */
+    public function addCheckboxField( $name, $attributes = array(), $label = '' ) {
+        $this->fields[] = array(
+                'type' => 'checkbox',
+                'name' => $name,
+                'attributes' => $attributes,
+                'label' => $label
+        );
+    }
+
+    /**
      * Show text field.
      *
      * @since 1.0.0
@@ -242,7 +261,8 @@ class MagicMetaBox {
         $value = isset( $meta[$field['name']] ) ? $meta[$field['name']] : '';
         ?>
         <input id="<?php echo $field['name']; ?>"
-                type="text" name="<?php echo $this->metaName; ?>[<?php echo $field['name']; ?>]"
+                type="text"
+                name="<?php echo $this->metaName; ?>[<?php echo $field['name']; ?>]"
                 value="<?php echo esc_attr( $value ); ?>"
                 <?php $this->generateElementAttributes( $field['attributes'] ); ?>/>
     <?php
@@ -299,6 +319,26 @@ class MagicMetaBox {
         <textarea id="<?php echo $field['name']; ?>"
                 name="<?php echo $this->metaName; ?>[<?php echo $field['name']; ?>]"
                 <?php $this->generateElementAttributes( $field['attributes'] ); ?>><?php echo esc_attr( $value ); ?></textarea>
+    <?php
+    }
+
+    /**
+     * Show checkbox field.
+     *
+     * @since 1.0.0
+     * @param array $field
+     * @param string|array $meta
+     * @return void
+     */
+    protected function showCheckboxField( $field, $meta ) {
+        $value = isset( $meta[$field['name']] ) ? $meta[$field['name']] : '';
+        $checked = $value === 'on' ? 'checked' : '';
+        ?>
+        <input id="<?php echo $field['name']; ?>"
+                type="checkbox"
+                name="<?php echo $this->metaName; ?>[<?php echo $field['name']; ?>]"
+                <?php echo $checked; ?>
+                <?php $this->generateElementAttributes( $field['attributes'] ); ?>/>
     <?php
     }
 
