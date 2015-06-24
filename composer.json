@@ -20,7 +20,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Lib\\": "lib/"
+      "MagicMetaBox\\": "src/MagicMetaBox"
     }
   }
 }

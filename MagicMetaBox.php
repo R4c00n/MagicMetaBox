@@ -1,4 +1,4 @@
-<?php namespace Lib;
+<?php namespace MagicMetaBox;
 
 class MagicMetaBox {
 
