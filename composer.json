@@ -1,5 +1,5 @@
 {
-  "name": "Gloeckchen/MagicMetaBox",
+  "name": "gloeckchen/magic-meta-box",
   "description": "Helper class to generate wordpress metaboxe",
   "homepage": "https://github.com/Gloeckchen/MagicMetaBox",
   "license": "MIT",
@@ -14,6 +14,7 @@
     }
   ],
   "require": {
+    "php": ">=5.3.0",
     "nategood/httpful": "*"
   },
   "autoload": {
