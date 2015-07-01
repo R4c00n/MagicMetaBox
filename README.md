@@ -57,6 +57,10 @@ Add a select input to your new metabox:
 ```
 $myMetaBox->addSelectField( 
     'my-select', // Textarea name
+    array( // Options
+      0 => 'Yes',
+      1 => 'No'
+    ),
     true, // Multiple
     array( // Additional attributes
         'size' => 5
