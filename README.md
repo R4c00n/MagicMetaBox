@@ -47,7 +47,7 @@ $myMetaBox->addTextAreaField(
 Add a checkbox to your new metabox:
 ```
 $myMetaBox->addCheckboxField( 
-    'my-checkbox', // Textarea name
+    'my-checkbox', // Checkbox name
     array(), // Additional attributes
     'My checkbox' // Associated label text
 );
@@ -56,7 +56,7 @@ $myMetaBox->addCheckboxField(
 Add a select input to your new metabox:
 ```
 $myMetaBox->addSelectField( 
-    'my-select', // Textarea name
+    'my-select', // Select name
     array( // Options
       0 => 'Yes',
       1 => 'No'
