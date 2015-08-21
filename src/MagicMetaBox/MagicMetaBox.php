@@ -1,5 +1,18 @@
-<?php namespace MagicMetaBox;
+<?php
+/**
+ * @version 1.1.0
+ * @author R4c00n <marcel.kempf93@gmail.com>
+ * @licence MIT
+ */
+namespace MagicMetaBox;
 
+/**
+ * Helper class to generate wordpress metaboxes
+ *
+ * @since 1.0.0
+ * @author R4c00n <marcel.kempf93@gmail.com>
+ * @licence MIT
+ */
 class MagicMetaBox {
 
     /**
@@ -31,6 +44,20 @@ class MagicMetaBox {
     protected $prefix = '';
 
     /**
+     * @since 1.1.0
+     * @access protected
+     * @var string
+     */
+    protected $context = '';
+
+    /**
+     * @since 1.1.0
+     * @access protected
+     * @var string
+     */
+    protected $priority = '';
+
+    /**
      * @since 1.0.0
      * @access protected
      * @var string
@@ -52,13 +79,18 @@ class MagicMetaBox {
      * @param string $title
      * @param array $screens
      * @param string $prefix
+     * @param string $context
+     * @param string $priority
      */
-    public function __construct( $id, $title, $screens, $prefix ) {
+    public function __construct( $id, $title, $screens, $prefix, $context = 'advanced',
+                                 $priority = 'default' ) {
         $this->id = $id;
         $this->title = $title;
         $this->screens = $screens;
         $this->prefix = $prefix;
         $this->metaName = $this->prefix . $this->id;
+        $this->context = $context;
+        $this->priority = $priority;
 
         add_action( 'add_meta_boxes', array( $this, 'addMetaBox' ) );
         add_action( 'save_post', array( $this, 'saveMetaBox' ) );
@@ -73,10 +105,12 @@ class MagicMetaBox {
     public function addMetaBox() {
         foreach ( $this->screens as $screen ) {
             add_meta_box(
-                    $this->id,
-                    $this->title,
-                    array( $this, 'metaBoxCallback' ),
-                    $screen
+                $this->id,
+                $this->title,
+                array( $this, 'metaBoxCallback' ),
+                $screen,
+                $this->context,
+                $this->priority
             );
         }
     }
@@ -110,7 +144,7 @@ class MagicMetaBox {
             <?php endforeach; ?>
             </tbody>
         </table>
-    <?php
+        <?php
     }
 
     /**
@@ -124,7 +158,7 @@ class MagicMetaBox {
         $isAutoSave = wp_is_post_autosave( $postId );
         $isRevision = wp_is_post_revision( $postId );
         $isValidNonce = ( isset( $_POST[$this->metaName . '_nonce'] )
-                && wp_verify_nonce( $_POST[$this->metaName . '_nonce'], basename( __FILE__ ) ) ) ? true : false;
+            && wp_verify_nonce( $_POST[$this->metaName . '_nonce'], basename( __FILE__ ) ) ) ? true : false;
         if ( $isAutoSave || $isRevision || $isValidNonce ) {
             return;
         }
@@ -184,10 +218,10 @@ class MagicMetaBox {
      */
     public function addTextField( $name, $attributes = array(), $label = '' ) {
         $this->fields[] = array(
-                'type' => 'text',
-                'name' => $name,
-                'attributes' => $attributes,
-                'label' => $label
+            'type' => 'text',
+            'name' => $name,
+            'attributes' => $attributes,
+            'label' => $label,
         );
     }
 
@@ -202,10 +236,10 @@ class MagicMetaBox {
      */
     public function addTextAreaField( $name, $attributes = array(), $label = '' ) {
         $this->fields[] = array(
-                'type' => 'textArea',
-                'name' => $name,
-                'attributes' => $attributes,
-                'label' => $label
+            'type' => 'textArea',
+            'name' => $name,
+            'attributes' => $attributes,
+            'label' => $label,
         );
     }
 
@@ -222,12 +256,12 @@ class MagicMetaBox {
      */
     public function addSelectField( $name, $options, $multiple, $attributes = array(), $label = '' ) {
         $this->fields[] = array(
-                'type' => 'select',
-                'name' => $name,
-                'options' => $options,
-                'multiple' => $multiple,
-                'attributes' => $attributes,
-                'label' => $label
+            'type' => 'select',
+            'name' => $name,
+            'options' => $options,
+            'multiple' => $multiple,
+            'attributes' => $attributes,
+            'label' => $label,
         );
     }
 
@@ -242,10 +276,10 @@ class MagicMetaBox {
      */
     public function addCheckboxField( $name, $attributes = array(), $label = '' ) {
         $this->fields[] = array(
-                'type' => 'checkbox',
-                'name' => $name,
-                'attributes' => $attributes,
-                'label' => $label
+            'type' => 'checkbox',
+            'name' => $name,
+            'attributes' => $attributes,
+            'label' => $label,
         );
     }
 
@@ -261,11 +295,11 @@ class MagicMetaBox {
         $value = isset( $meta[$field['name']] ) ? $meta[$field['name']] : '';
         ?>
         <input id="<?php echo $field['name']; ?>"
-                type="text"
-                name="<?php echo $this->metaName; ?>[<?php echo $field['name']; ?>]"
-                value="<?php echo esc_attr( $value ); ?>"
-                <?php $this->generateElementAttributes( $field['attributes'] ); ?>/>
-    <?php
+            type="text"
+            name="<?php echo $this->metaName; ?>[<?php echo $field['name']; ?>]"
+            value="<?php echo esc_attr( $value ); ?>"
+            <?php $this->generateElementAttributes( $field['attributes'] ); ?>/>
+        <?php
     }
 
     /**
@@ -285,10 +319,10 @@ class MagicMetaBox {
         }
         ?>
         <select id="<?php echo $field['name']; ?>"
-                name="<?php echo $name; ?>"
-                value="<?php echo $value; ?>"
-                <?php echo $multiple ? 'multiple="multiple"' : ''; ?>
-                <?php $this->generateElementAttributes( $field['attributes'] ); ?>>
+            name="<?php echo $name; ?>"
+            value="<?php echo $value; ?>"
+            <?php echo $multiple ? 'multiple="multiple"' : ''; ?>
+            <?php $this->generateElementAttributes( $field['attributes'] ); ?>>
             <?php foreach ( $field['options'] as $key => $option ) : ?>
                 <?php
                 if ( !is_array( $value ) ) {
@@ -302,7 +336,7 @@ class MagicMetaBox {
                 </option>
             <?php endforeach; ?>
         </select>
-    <?php
+        <?php
     }
 
     /**
@@ -317,9 +351,9 @@ class MagicMetaBox {
         $value = isset( $meta[$field['name']] ) ? $meta[$field['name']] : '';
         ?>
         <textarea id="<?php echo $field['name']; ?>"
-                name="<?php echo $this->metaName; ?>[<?php echo $field['name']; ?>]"
-                <?php $this->generateElementAttributes( $field['attributes'] ); ?>><?php echo esc_attr( $value ); ?></textarea>
-    <?php
+            name="<?php echo $this->metaName; ?>[<?php echo $field['name']; ?>]"
+            <?php $this->generateElementAttributes( $field['attributes'] ); ?>><?php echo esc_attr( $value ); ?></textarea>
+        <?php
     }
 
     /**
@@ -335,11 +369,11 @@ class MagicMetaBox {
         $checked = $value === 'on' ? 'checked' : '';
         ?>
         <input id="<?php echo $field['name']; ?>"
-                type="checkbox"
-                name="<?php echo $this->metaName; ?>[<?php echo $field['name']; ?>]"
-                <?php echo $checked; ?>
-                <?php $this->generateElementAttributes( $field['attributes'] ); ?>/>
-    <?php
+            type="checkbox"
+            name="<?php echo $this->metaName; ?>[<?php echo $field['name']; ?>]"
+            <?php echo $checked; ?>
+            <?php $this->generateElementAttributes( $field['attributes'] ); ?>/>
+        <?php
     }
 
     /**

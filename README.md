@@ -19,7 +19,9 @@ $myMetaBox = new MagicMetaBox(
     'my-metabox', // unique metabox id
     'My MetaBox title', // Metabox title
     array( 'post', 'page' ), // Metabox screens
-    'prefix_' // Meta prefix
+    'prefix_' // Meta prefix,
+    'side', // Metabox context (optional)
+    'high' // Mitabox priority (optional)
 ); 
 ```
 
