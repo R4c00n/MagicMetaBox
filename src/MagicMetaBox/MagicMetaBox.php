@@ -172,7 +172,7 @@ class MagicMetaBox {
             }
 
             $postMeta = isset( $_POST[$this->metaName] ) ? $_POST[$this->metaName] : false;
-            if ( !$postMeta ) {
+            if ( $postMeta === false ) {
                 return;
             }
             $newMetaValue = isset( $postMeta[$metaName] ) ? $postMeta[$metaName] : ( $single ? '' : array() );
@@ -196,9 +196,6 @@ class MagicMetaBox {
         if ( isset( $oldMeta[$metaName] ) ) {
             unset( $oldMeta[$metaName] );
             update_post_meta( $postId, $this->metaName, $oldMeta );
-        }
-        if ( empty( $newMetaValue ) ) {
-            return;
         }
         if ( !is_array( $newMetaValue ) ) {
             $newMetaValue = trim( $newMetaValue );
