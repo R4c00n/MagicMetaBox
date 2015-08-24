@@ -33,7 +33,8 @@ $myMetaBox->addTextField(
     array( // Additional attributes
         'class' => 'input-field'
     ),
-    'My text field' // Associated label text
+    'My text field', // Associated label text
+    'I am a default', // Default value
 );
 ```
 
@@ -42,7 +43,8 @@ Add a textarea to your new metabox:
 $myMetaBox->addTextAreaField( 
     'my-text-arae', // Textarea name
     array(), // Additional attributes
-    'My text area' // Associated label text
+    'My text area', // Associated label text
+    'I am a default', // Default value
 );
 ```
 
