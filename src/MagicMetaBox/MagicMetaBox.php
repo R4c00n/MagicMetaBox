@@ -211,14 +211,16 @@ class MagicMetaBox {
      * @param string $name
      * @param array $attributes
      * @param string $label
+     * @param string $default
      * @return void
      */
-    public function addTextField( $name, $attributes = array(), $label = '' ) {
+    public function addTextField( $name, $attributes = array(), $label = '', $default = '' ) {
         $this->fields[] = array(
             'type' => 'text',
             'name' => $name,
             'attributes' => $attributes,
             'label' => $label,
+            'default' => $default,
         );
     }
 
@@ -229,14 +231,16 @@ class MagicMetaBox {
      * @param string $name
      * @param array $attributes
      * @param string $label
+     * @param string $default
      * @return void
      */
-    public function addTextAreaField( $name, $attributes = array(), $label = '' ) {
+    public function addTextAreaField( $name, $attributes = array(), $label = '', $default = '' ) {
         $this->fields[] = array(
             'type' => 'textArea',
             'name' => $name,
             'attributes' => $attributes,
             'label' => $label,
+            'default' => $default,
         );
     }
 
@@ -289,12 +293,12 @@ class MagicMetaBox {
      * @return void
      */
     protected function showTextField( $field, $meta ) {
-        $value = isset( $meta[$field['name']] ) ? $meta[$field['name']] : '';
+        $value = isset( $meta[$field['name']] ) ? esc_attr( $meta[$field['name']] ) : '';
         ?>
         <input id="<?php echo $field['name']; ?>"
             type="text"
             name="<?php echo $this->metaName; ?>[<?php echo $field['name']; ?>]"
-            value="<?php echo esc_attr( $value ); ?>"
+            value="<?php echo $value ? $value : $field['default']; ?>"
             <?php $this->generateElementAttributes( $field['attributes'] ); ?>/>
         <?php
     }
@@ -345,11 +349,13 @@ class MagicMetaBox {
      * @return void
      */
     protected function showTextAreaField( $field, $meta ) {
-        $value = isset( $meta[$field['name']] ) ? $meta[$field['name']] : '';
+        $value = isset( $meta[$field['name']] ) ? esc_attr( $meta[$field['name']] ) : '';
         ?>
         <textarea id="<?php echo $field['name']; ?>"
             name="<?php echo $this->metaName; ?>[<?php echo $field['name']; ?>]"
-            <?php $this->generateElementAttributes( $field['attributes'] ); ?>><?php echo esc_attr( $value ); ?></textarea>
+            <?php $this->generateElementAttributes( $field['attributes'] ); ?>>
+            <?php echo $value ? $value : $field['default']; ?>
+        </textarea>
         <?php
     }
 
