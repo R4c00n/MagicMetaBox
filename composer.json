@@ -1,7 +1,7 @@
 {
-  "name": "gloeckchen/magic-meta-box",
-  "description": "Helper class to generate wordpress metaboxes.",
-  "homepage": "https://github.com/Gloeckchen/MagicMetaBox",
+  "name": "r4c00n/magic-meta-box",
+  "description": "Helper class to generate WordPress MetaBoxes.",
+  "homepage": "https://github.com/R4c00n/MagicMetaBox",
   "license": "MIT",
   "keywords": [
     "wordpress",
@@ -9,8 +9,8 @@
   ],
   "authors": [
     {
-      "name": "Marcel Kempf",
-      "email": "gloeckchenxvx@gmail.com"
+      "name": "R4c00n",
+      "email": "marcel.kempf93@gmail.com"
     }
   ],
   "require": {
