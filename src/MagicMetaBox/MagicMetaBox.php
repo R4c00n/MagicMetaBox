@@ -172,9 +172,6 @@ class MagicMetaBox {
             }
 
             $postMeta = isset( $_POST[$this->metaName] ) ? $_POST[$this->metaName] : false;
-            if ( $postMeta === false ) {
-                return;
-            }
             $newMetaValue = isset( $postMeta[$metaName] ) ? $postMeta[$metaName] : ( $single ? '' : array() );
 
             $this->saveField( $postId, $field, $oldMeta, $newMetaValue );
