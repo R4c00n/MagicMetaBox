@@ -19,14 +19,15 @@ $myMetaBox = new MagicMetaBox(
     array( 'post', 'page' ), // Metabox screens
     'prefix_' // Meta prefix,
     'side', // Metabox context (optional)
-    'high' // Mitabox priority (optional)
-); 
+    'high', // Metabox priority (optional)
+    true // Serialize values under the metabox id
+);
 ```
 
 ### Add input fields
 Add a text input field to your new metabox:
 ```
-$myMetaBox->addTextField( 
+$myMetaBox->addTextField(
     'my-text-field', // Input name
     array( // Additional attributes
         'class' => 'input-field'
@@ -38,7 +39,7 @@ $myMetaBox->addTextField(
 
 Add a textarea to your new metabox:
 ```
-$myMetaBox->addTextAreaField( 
+$myMetaBox->addTextAreaField(
     'my-text-arae', // Textarea name
     array(), // Additional attributes
     'My text area', // Associated label text
@@ -48,7 +49,7 @@ $myMetaBox->addTextAreaField(
 
 Add a checkbox to your new metabox:
 ```
-$myMetaBox->addCheckboxField( 
+$myMetaBox->addCheckboxField(
     'my-checkbox', // Checkbox name
     array(), // Additional attributes
     'My checkbox' // Associated label text
@@ -57,7 +58,7 @@ $myMetaBox->addCheckboxField(
 
 Add a select input to your new metabox:
 ```
-$myMetaBox->addSelectField( 
+$myMetaBox->addSelectField(
     'my-select', // Select name
     array( // Options
       0 => 'Yes',
@@ -66,7 +67,7 @@ $myMetaBox->addSelectField(
     true, // Multiple
     array( // Additional attributes
         'size' => 5
-    ), 
+    ),
     'My select' // Associated label text
 );
 ```
