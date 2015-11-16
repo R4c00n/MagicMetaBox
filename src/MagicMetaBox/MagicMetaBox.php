@@ -206,13 +206,19 @@ class MagicMetaBox {
         if ( !$this->serialize ) {
             // Pevent adding default value if post is new or the new meta value is
             // equivalent to the default
-            if( !$field['save_default'] ) {
-                $eql = $newMetaValue === $field['default'];
+            if( array_key_exists( 'saveDefault', $field ) && !$field['saveDefault'] ) {
+                $eql = trim( $newMetaValue ) === trim( $field['default'] );
                 $eql_strings = strval( $newMetaValue ) === strval( $field['default'] );
                 $numeric_types = is_numeric( $newMetaValue ) && is_numeric( $field['default'] );
                 $key_isset = array_key_exists( $field['name'], (array)$_POST[$this->metaName] );
-                
-                if( $eql || ( $numeric_types && $eql_strings ) || ( !$update && !$key_isset ) ) {
+
+                if( !$key_isset ) {
+                    // If a new value is not being set, then the meta row should
+                    // not be affected
+                    return;
+                }
+
+                if( $eql || ( $numeric_types && $eql_strings ) ) {
                     delete_post_meta( $postId, $metaKey );
                     return;
                 }
@@ -222,8 +228,6 @@ class MagicMetaBox {
             
             return;
         }
-        
-        die(3);
         
         if ( isset( $oldMeta[$metaName] ) ) {
             unset( $oldMeta[$metaName] );
@@ -247,13 +251,14 @@ class MagicMetaBox {
      * @param string $default
      * @return void
      */
-    public function addTextField( $name, $attributes = array(), $label = '', $default = '' ) {
+    public function addTextField( $name, $attributes = array(), $label = '', $default = '', $saveDefault = '' ) {
         $this->fields[] = array(
             'type' => 'text',
             'name' => $name,
             'attributes' => $attributes,
             'label' => $label,
             'default' => $default,
+            'saveDefault' => $saveDefault
         );
     }
 
@@ -265,15 +270,17 @@ class MagicMetaBox {
      * @param array $attributes
      * @param string $label
      * @param string $default
+     * @param bool $saveDefault Whether to save value when it equals the default (first value in the options list)
      * @return void
      */
-    public function addTextAreaField( $name, $attributes = array(), $label = '', $default = '' ) {
+    public function addTextAreaField( $name, $attributes = array(), $label = '', $default = '', $saveDefault = '' ) {
         $this->fields[] = array(
             'type' => 'textArea',
             'name' => $name,
             'attributes' => $attributes,
             'label' => $label,
             'default' => $default,
+            'saveDefault' => $saveDefault,
         );
     }
 
@@ -286,10 +293,10 @@ class MagicMetaBox {
      * @param bool $multiple
      * @param array $attributes
      * @param string $label
-     * @param bool $save_default Whether to save value when it equals the default (first value in the options list)
+     * @param bool $saveDefault Whether to save value when it equals the default (first value in the options list)
      * @return void
      */
-    public function addSelectField( $name, $options, $multiple, $attributes = array(), $label = '', $save_default = true ) {
+    public function addSelectField( $name, $options, $multiple, $attributes = array(), $label = '', $saveDefault = true ) {
         if( !is_array( $options ) ) {
             $options = array();
         } else {
@@ -304,7 +311,7 @@ class MagicMetaBox {
             'attributes' => $attributes,
             'label' => $label,
             'default' => count( $options ) ? key( $options ) : '',
-            'save_default' => $save_default
+            'saveDefault' => $saveDefault
         );
     }
 
