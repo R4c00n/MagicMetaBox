@@ -83,7 +83,7 @@ class MagicMetaBox {
      * @param string $priority
      */
     public function __construct( $id, $title, $screens, $prefix, $context = 'advanced',
-                                 $priority = 'default' ) {
+                                 $priority = 'default', $serialize = true ) {
         $this->id = $id;
         $this->title = $title;
         $this->screens = $screens;
@@ -91,9 +91,10 @@ class MagicMetaBox {
         $this->metaName = $this->prefix . $this->id;
         $this->context = $context;
         $this->priority = $priority;
+        $this->serialize = $serialize;
 
         add_action( 'add_meta_boxes', array( $this, 'addMetaBox' ) );
-        add_action( 'save_post', array( $this, 'saveMetaBox' ) );
+        add_action( 'save_post', array( $this, 'saveMetaBox' ), 10, 3 );
     }
 
     /**
@@ -128,12 +129,19 @@ class MagicMetaBox {
             <tbody>
             <?php foreach ( $this->fields as $field ): ?>
                 <tr>
-                    <th scope="row">
-                        <label for="<?php echo $field['name']; ?>"><?php echo $field['label']; ?></label>
-                    </th>
+                    <?php if ( !empty( $field['label'] ) ): ?>
+                        <th scope="row">
+                            <label for="<?php echo esc_attr( $field['name'] ); ?>"><?php echo esc_html( $field['label'] ); ?></label>
+                        </th>
+                    <?php endif; ?>
                     <td>
                         <?php
-                        $meta = get_post_meta( $post->ID, $this->prefix . $this->id, true );
+                        if ( $this->serialize) {
+                            $meta = get_post_meta( $post->ID, $this->prefix . $this->id, true );
+                        } else {
+                            $meta = [];
+                            $meta[$field['name']] = get_post_meta( $post->ID, $field['name'], true );
+                        }
                         $methodName = 'show' . ucfirst( $field['type'] ) . 'Field';
                         if ( method_exists( $this, $methodName ) ) {
                             call_user_func( array( $this, $methodName ), $field, $meta );
@@ -152,9 +160,11 @@ class MagicMetaBox {
      *
      * @since 1.0.0
      * @param int $postId
+     * @param post $post The post object.
+     * @param bool $update Whether this is an existing post being updated or not.
      * @return void
      */
-    public function saveMetaBox( $postId ) {
+    public function saveMetaBox( $postId, $post, $update ) {
         $isAutoSave = wp_is_post_autosave( $postId );
         $isRevision = wp_is_post_revision( $postId );
         $isValidNonce = ( isset( $_POST[$this->metaName . '_nonce'] )
@@ -165,7 +175,7 @@ class MagicMetaBox {
 
         foreach ( $this->fields as $field ) {
             $metaName = $field['name'];
-            $single = !isset( $field['multiple'] ) || !$field['multiple'] ? false : true;
+            $single = !isset( $field['multiple'] ) || !$field['multiple'] ? true : false;
             $oldMeta = get_post_meta( $postId, $this->metaName, true );
             if ( empty( $oldMeta ) ) {
                 $oldMeta = $single ? '' : array();
@@ -173,8 +183,8 @@ class MagicMetaBox {
 
             $postMeta = filter_input( INPUT_POST, $this->metaName, FILTER_DEFAULT, FILTER_REQUIRE_ARRAY );
             $newMetaValue = isset( $postMeta[$metaName] ) ? $postMeta[$metaName] : ( $single ? '' : array() );
-
-            $this->saveField( $postId, $field, $oldMeta, $newMetaValue );
+            
+            $this->saveField( $postId, $field, $oldMeta, $newMetaValue, $update );
         }
     }
 
@@ -186,19 +196,49 @@ class MagicMetaBox {
      * @param array $field
      * @param string|array $oldMeta
      * @param string|array $newMetaValue
+     * @param bool $update
      * @return void
      */
-    protected function saveField( $postId, $field, $oldMeta, $newMetaValue ) {
+    protected function saveField( $postId, $field, $oldMeta, $newMetaValue, $update ) {
         $metaName = $field['name'];
+        $metaKey = !$this->serialize ? $metaName : $this->metaName;
+        
+        if ( !$this->serialize ) {
+            // Pevent adding default value if post is new or the new meta value is
+            // equivalent to the default
+            if( array_key_exists( 'saveDefault', $field ) && !$field['saveDefault'] ) {
+                $eql = trim( $newMetaValue ) === trim( $field['default'] );
+                $eql_strings = strval( $newMetaValue ) === strval( $field['default'] );
+                $numeric_types = is_numeric( $newMetaValue ) && is_numeric( $field['default'] );
+                $key_isset = array_key_exists( $field['name'], (array)$_POST[$this->metaName] );
+
+                if( !$key_isset ) {
+                    // If a new value is not being set, then the meta row should
+                    // not be affected
+                    return;
+                }
+
+                if( $eql || ( $numeric_types && $eql_strings ) ) {
+                    delete_post_meta( $postId, $metaKey );
+                    return;
+                }
+            }
+            
+            update_post_meta( $postId, $metaKey, $newMetaValue );
+            
+            return;
+        }
+        
         if ( isset( $oldMeta[$metaName] ) ) {
             unset( $oldMeta[$metaName] );
-            update_post_meta( $postId, $this->metaName, $oldMeta );
+            update_post_meta( $postId, $metaKey, $oldMeta );
         }
         if ( !is_array( $newMetaValue ) ) {
             $newMetaValue = trim( $newMetaValue );
         }
         $oldMeta[$metaName] = $newMetaValue;
-        update_post_meta( $postId, $this->metaName, $oldMeta );
+        
+        update_post_meta( $postId, $metaKey, $oldMeta );
     }
 
     /**
@@ -211,13 +251,14 @@ class MagicMetaBox {
      * @param string $default
      * @return void
      */
-    public function addTextField( $name, $attributes = array(), $label = '', $default = '' ) {
+    public function addTextField( $name, $attributes = array(), $label = '', $default = '', $saveDefault = '' ) {
         $this->fields[] = array(
             'type' => 'text',
             'name' => $name,
             'attributes' => $attributes,
             'label' => $label,
             'default' => $default,
+            'saveDefault' => $saveDefault
         );
     }
 
@@ -229,15 +270,17 @@ class MagicMetaBox {
      * @param array $attributes
      * @param string $label
      * @param string $default
+     * @param bool $saveDefault Whether to save value when it equals the default (first value in the options list)
      * @return void
      */
-    public function addTextAreaField( $name, $attributes = array(), $label = '', $default = '' ) {
+    public function addTextAreaField( $name, $attributes = array(), $label = '', $default = '', $saveDefault = '' ) {
         $this->fields[] = array(
             'type' => 'textArea',
             'name' => $name,
             'attributes' => $attributes,
             'label' => $label,
             'default' => $default,
+            'saveDefault' => $saveDefault,
         );
     }
 
@@ -250,9 +293,16 @@ class MagicMetaBox {
      * @param bool $multiple
      * @param array $attributes
      * @param string $label
+     * @param bool $saveDefault Whether to save value when it equals the default (first value in the options list)
      * @return void
      */
-    public function addSelectField( $name, $options, $multiple, $attributes = array(), $label = '' ) {
+    public function addSelectField( $name, $options, $multiple, $attributes = array(), $label = '', $saveDefault = true ) {
+        if( !is_array( $options ) ) {
+            $options = array();
+        } else {
+            reset( $options );
+        }
+        
         $this->fields[] = array(
             'type' => 'select',
             'name' => $name,
@@ -260,6 +310,8 @@ class MagicMetaBox {
             'multiple' => $multiple,
             'attributes' => $attributes,
             'label' => $label,
+            'default' => count( $options ) ? key( $options ) : '',
+            'saveDefault' => $saveDefault
         );
     }
 
@@ -292,10 +344,10 @@ class MagicMetaBox {
     protected function showTextField( $field, $meta ) {
         $value = isset( $meta[$field['name']] ) ? esc_attr( $meta[$field['name']] ) : '';
         ?>
-        <input id="<?php echo $field['name']; ?>"
+        <input id="<?php echo esc_attr( $field['name'] ); ?>"
             type="text"
-            name="<?php echo $this->metaName; ?>[<?php echo $field['name']; ?>]"
-            value="<?php echo $value ? $value : $field['default']; ?>"
+            name="<?php echo esc_attr( $this->metaName ); ?>[<?php echo esc_attr( $field['name'] ); ?>]"
+            value="<?php echo $value ? $value : esc_attr( $field['default'] ); ?>"
             <?php $this->generateElementAttributes( $field['attributes'] ); ?>/>
         <?php
     }
@@ -309,28 +361,32 @@ class MagicMetaBox {
      * @return void
      */
     protected function showSelectField( $field, $meta ) {
-        $value = isset( $meta[$field['name']] ) ? $meta[$field['name']] : '';
+        $value = isset( $meta[$field['name']] ) ? esc_attr( $meta[$field['name']] ) : '';
         $multiple = isset( $field['multiple'] ) && $field['multiple'] ? true : false;
         $name = $this->metaName . '[' . $field['name'] . ']';
         if ( $multiple ) {
             $name .= '[]';
         }
         ?>
-        <select id="<?php echo $field['name']; ?>"
-            name="<?php echo $name; ?>"
+        <select id="<?php echo esc_attr( $field['name'] ); ?>"
+            name="<?php echo esc_attr( $name ); ?>"
             value="<?php echo $value; ?>"
             <?php echo $multiple ? 'multiple="multiple"' : ''; ?>
             <?php $this->generateElementAttributes( $field['attributes'] ); ?>>
             <?php foreach ( $field['options'] as $key => $option ) : ?>
                 <?php
                 if ( !is_array( $value ) ) {
-                    $selected = $value === $key ? 'selected' : '';
+                    if(is_numeric($key) && is_numeric($value)) {
+                        $selected = strval($value) === strval($key) ? 'selected' : '';
+                    } else {
+                        $selected = $value === $key ? 'selected' : '';
+                    }
                 } else {
                     $selected = in_array( $key, $value ) ? 'selected' : '';
                 }
                 ?>
-                <option value="<?php echo $key; ?>" <?php echo $selected; ?>>
-                    <?php echo $option; ?>
+                <option value="<?php echo esc_attr( $key ); ?>" <?php echo $selected; ?>>
+                    <?php echo esc_html( $option ); ?>
                 </option>
             <?php endforeach; ?>
         </select>
@@ -348,10 +404,10 @@ class MagicMetaBox {
     protected function showTextAreaField( $field, $meta ) {
         $value = isset( $meta[$field['name']] ) ? esc_attr( $meta[$field['name']] ) : '';
         ?>
-        <textarea id="<?php echo $field['name']; ?>"
-            name="<?php echo $this->metaName; ?>[<?php echo $field['name']; ?>]"
+        <textarea id="<?php echo esc_attr( $field['name'] ); ?>"
+            name="<?php echo esc_attr( $this->metaName ); ?>[<?php echo esc_attr( $field['name'] ); ?>]"
             <?php $this->generateElementAttributes( $field['attributes'] ); ?>>
-            <?php echo $value ? $value : $field['default']; ?>
+            <?php echo $value ? $value : esc_attr( $field['default'] ); ?>
         </textarea>
         <?php
     }
@@ -365,12 +421,12 @@ class MagicMetaBox {
      * @return void
      */
     protected function showCheckboxField( $field, $meta ) {
-        $value = isset( $meta[$field['name']] ) ? $meta[$field['name']] : '';
+        $value = isset( $meta[$field['name']] ) ? esc_attr( $meta[$field['name']] ) : '';
         $checked = $value === 'on' ? 'checked' : '';
         ?>
-        <input id="<?php echo $field['name']; ?>"
+        <input id="<?php echo esc_attr( $field['name'] ); ?>"
             type="checkbox"
-            name="<?php echo $this->metaName; ?>[<?php echo $field['name']; ?>]"
+            name="<?php echo esc_attr( $this->metaName ); ?>[<?php echo esc_attr( $field['name'] ); ?>]"
             <?php echo $checked; ?>
             <?php $this->generateElementAttributes( $field['attributes'] ); ?>/>
         <?php
@@ -386,7 +442,7 @@ class MagicMetaBox {
     protected function generateElementAttributes( $attributes ) {
         $elementAttributes = '';
         foreach ( $attributes as $key => $value ) {
-            $elementAttributes .= $key . '="' . $value . '"';
+            $elementAttributes .= $key . '="' . esc_attr( $value ) . '"';
         }
         echo $elementAttributes;
     }
